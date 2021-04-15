@@ -1,74 +1,90 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
+import Spinner from '../spinner/Spinner'
+import { api } from '../../constants/api'
 
-const api = {
-    base: "https://api.openweathermap.org/data/2.5/",
-    key: "5e63ade308cb1beca653a0e28b9d883a"
-  }
-
-class Location extends Component {
-
-    state = {
-        geoipCity: "",
-    }
+const Location = () => {
+    const [geoip, setGeoip] = useState(null)
+    const [weatherInfo, setWeatherInfo] = useState(null)
+    const [error, setError] = useState(null)
     
-    componentDidMount(){
-        const geoApiUrl = "https://geoip-db.com/json/";
-        fetch(geoApiUrl)
-        
-        .then(res => res.json())
-        .then(result => {
-        console.log(result)
+    useEffect(() => {
+        const getGeoipCity = async () => {
+            try {
+                const url = 'https://geoip-db.com/json/'
+                const resGeo = await fetch(url)
 
-            this.setState({ geoipCity: result.city }, () => {
-                //console.log(this.state);
-                const weatherApiUrl = `${api.base}weather?q=${this.state.geoipCity}&weather&units=metric&APPID=${api.key}`;
-                fetch(weatherApiUrl)
-                
-                .then(res => res.json())
-                .then(result => {
-                    console.log(result)
+                if(!resGeo.ok){
+                    throw new Error('Could not get your location')
+                }
 
-                    let locationOutput = document.querySelector("#locationOutput");
-                    if(result.cod === "404"){
-                        locationOutput.innerHTML = `${this.state.geoipCity} is not a valid city name`;
+                const dataGeo = await resGeo.json()
+
+                    setGeoip(dataGeo)
+
+                    const weatherApiUrl = `${api.base}weather?q=${dataGeo.city}&weather&units=metric&APPID=${api.key}`;
+
+                    const resWeather = await fetch(weatherApiUrl)
+
+                    if(!resWeather.ok){
+                        throw new Error('Could not get weather information')
                     }
+    
+                    const dataresWeather = await resWeather.json()
 
-                    
-                    locationOutput.innerHTML = `<p>
-                    Your live in ${this.state.geoipCity} and it feels like ${result.main.feels_like}°C
-                    </p>`;
-                    
-                })
-                .catch(err => {
-                    console.log("Fetch error: " + err);
-                });
-            });
-        })
-        .catch(err => {
-            console.log("Fetch error: " + err);
-        });
+                    setWeatherInfo(dataresWeather)
+                    setError(null)
 
-        //date
-        let dateOutputLocation = document.querySelector('#dateOutputLocation');
+                
+            } catch (err) {
+                setError(err)
+            }
+        }
 
-        let d = new Date();
-        dateOutputLocation.innerHTML = `<p>
-        Date: ${d.getDate()} / ${d.getMonth() + 1} / ${d.getFullYear()} <br>
-        Time: ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}
-        </p>`;
-    }
+        getGeoipCity()
+    }, [])
 
-  render() {
     return (
+        <>
+        <div className="container">
         <div className="row">
             <div className="col-12">
                 <h1>Your local weather</h1>
-                <div id="locationOutput"></div>
-                <div id="dateOutputLocation"></div>
             </div>
+            {geoip && weatherInfo ? (
+                <>
+                <div className="col-12">
+                    <p>
+                        {`${geoip.city} - ${geoip.country_name}(${geoip.country_code})`}
+                    </p>
+                    <p>
+                        {`The temperatrure feels like ${weatherInfo.main.feels_like}°C and is ${weatherInfo.main.temp}°C`}
+                    </p>
+                    <p>
+                    {`Wind is ${weatherInfo.wind.speed} m/s`}
+                    </p>
+                </div>
+                </>
+            ) : (
+                <>
+                <div className="col-12">
+                <Spinner></Spinner>
+                </div>
+                </>
+            )}
+            {error && (
+                <>
+                <div className="col-12">
+                    <p className="text-danger font-weight-bold">
+                        {`${error.name}: ${error.message}`}
+                    </p>
+                </div>
+                </>
+            )}
         </div>
+        </div>
+        </>
     );
-  }
+  
 }
 
 export default Location;

@@ -1,92 +1,95 @@
-import React, { Component, Fragment } from 'react';
+import React, { useState } from 'react';
+import Spinner from '../spinner/Spinner'
+import { api } from '../../constants/api'
 
-const api = {
-  base: "https://api.openweathermap.org/data/2.5/",
-  key: "5e63ade308cb1beca653a0e28b9d883a"
-}
+const Search = () => {
+  const [cityName, setCityName] = useState('')
+  const [cityInfo, setCityInfo] = useState(null)
+  const [error, setError] = useState(null)
+  const [isLoading, setIsLoading] = useState(null)
 
-class Search extends Component {
+  const searchCity = async (e) => {
+    e.preventDefault()
+    setIsLoading(true)
 
-  state = {
-      cityName: "",
-      feedback: ""
-  }
+    try {
+      if(cityName === ''){
+        setCityInfo(null)
+        throw new Error('You didnt search for a city')
+      }
+      const weatherApiUrl = `${api.base}weather?q=${cityName}&units=metric&APPID=${api.key}`
 
+      const res = await fetch(weatherApiUrl)
+      console.log(res)
 
-  inputOnChange = (e) => {
-    this.setState({ [e.target.name]: e.target.value });
-  }
+      if(!res.ok){
+        setCityInfo(null)
+        throw new Error(`Could not find city named ${cityName}`)
+      }
 
-  formOnSubmit = (e) => {
-    e.preventDefault();
+      const data = await res.json()
+      console.log(data)
 
-    if(this.state.cityName.length > 0){
-        this.searchCity(this.state.cityName);
-        this.setState({ feedback: `Results for ${this.state.cityName}` });
-        this.setState({ cityName: "" });
-    } else {
-        this.setState({ feedback: `Please enter a city name` })
-        //this.searchOutput.innerHTML = "";
+      setCityInfo(data)
+      setError(null)
+    } catch (err) {
+      setError(err)
     }
+    setIsLoading(false)
   }
 
-  searchCity = (cityName) => {
-    const weatherApiUrl = `${api.base}weather?q=${this.state.cityName}&units=metric&APPID=${api.key}`
-    fetch(weatherApiUrl)
-      .then(res => res.json())
-      .then(result => {
-        //console.log(cityName)
-        console.log(result)
-
-        let searchOutput = document.querySelector("#searchOutput");
-        if(result.cod === "404"){
-          searchOutput.innerHTML = `<p>${cityName} is not a valid city name</p>`;
-        }
-        
-        searchOutput.innerHTML = `<p>
-        Your searched for ${result.name}, located in ${result.sys.country} <br>
-        ${result.name} feels like ${result.main.feels_like}°C
-        </p>`;
-      })
-      .catch(err => {
-        console.log("Fetch error: " + err);
-      });
-      
-      //date
-      let dateOutputSearch = document.querySelector('#dateOutputSearch');
-
-      let d = new Date();
-      dateOutputSearch.innerHTML = `<p>
-      Date: ${d.getDate()} / ${d.getMonth() + 1} / ${d.getFullYear()} <br>
-      Time: ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}
-      </p>`;
-  }
-
-  render() {
     return (
-    <Fragment>
-      <div className="row">
+    <>
+<div className="container">
+<div className="row">
         <div className="col-12">
           <h1>Search</h1>
-            <form onSubmit={this.formOnSubmit}>
+            <form onSubmit={searchCity}>
                 <div className="form-group">
                     <label htmlFor="city">Search for cityname</label>
-                    <input onChange={this.inputOnChange} value={this.state.cityName} name="cityName" type="text" className="form-control"></input>
-                    <p className="text-info">{this.state.feedback}</p>
-                    <button type="submit" className="btn btn-primary">Search</button>
+                    <input onChange={(text) => {
+                      setCityName(text.target.value)
+                      }} value={cityName} name="cityName" type="text" className="form-control"></input>
                 </div>
+                <button type="submit" className="btn btn-primary">Search</button>
             </form>
         </div>
-      </div>
-      <div className="row">
-        <div className="col-12">
-          <div id="searchOutput"></div>
-          <div id="dateOutputSearch"></div>
+      
+        {cityInfo && (
+          <>
+          <div className="col-12">
+          <p>
+                        {`${cityInfo.name} - ${cityInfo.sys.country}`}
+                    </p>
+                    <p>
+                        {`The temperatrure feels like ${cityInfo.main.feels_like}°C and is ${cityInfo.main.temp}°C`}
+                    </p>
+                    <p>
+                    {`Wind is ${cityInfo.wind.speed} m/s`}
+                    </p>
+          </div>
+          </>
+        )}
+        {isLoading && (
+<>
+<div className="col-12">
+                <Spinner></Spinner>
+                </div>
+                </>
+        )}
+                    {error && (
+                <>
+                <div className="col-12">
+                    <p className="text-danger font-weight-bold">
+                        {`${error.name}: ${error.message}`}
+                    </p>
+                </div>
+                </>
+            )}
         </div>
-      </div>
-      </Fragment>
+</div>
+      </>
     );
-  }
 }
 
 export default Search;
