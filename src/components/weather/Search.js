@@ -17,10 +17,8 @@ const Search = () => {
         throw new Error('You didnt search for a city')
       }
       const weatherApiUrl = `${process.env.REACT_APP_API_BASE}weather?q=${cityName}&units=metric&APPID=${process.env.REACT_APP_API_KEY}`
-      console.log('api', weatherApiUrl)
 
       const res = await fetch(weatherApiUrl)
-      console.log(res)
 
       if(!res.ok){
         setCityInfo(null)
@@ -28,7 +26,6 @@ const Search = () => {
       }
 
       const data = await res.json()
-      console.log(data)
 
       setCityInfo(data)
       setError(null)
