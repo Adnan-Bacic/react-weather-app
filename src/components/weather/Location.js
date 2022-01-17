@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import Spinner from '../spinner/Spinner'
-import { api } from '../../constants/api'
 
 const Location = () => {
     const [geoip, setGeoip] = useState(null)
@@ -21,7 +20,7 @@ const Location = () => {
 
                     setGeoip(dataGeo)
 
-                    const weatherApiUrl = `${api.base}weather?q=${dataGeo.city}&weather&units=metric&APPID=${api.key}`;
+                    const weatherApiUrl = `${process.env.REACT_APP_API_BASE}weather?q=${dataGeo.city}&weather&units=metric&APPID=${process.env.REACT_APP_API_KEY}`;
 
                     const resWeather = await fetch(weatherApiUrl)
 

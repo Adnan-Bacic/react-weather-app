@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import Spinner from '../spinner/Spinner'
-import { api } from '../../constants/api'
 
 const Search = () => {
   const [cityName, setCityName] = useState('')
@@ -17,7 +16,8 @@ const Search = () => {
         setCityInfo(null)
         throw new Error('You didnt search for a city')
       }
-      const weatherApiUrl = `${api.base}weather?q=${cityName}&units=metric&APPID=${api.key}`
+      const weatherApiUrl = `${process.env.REACT_APP_API_BASE}weather?q=${cityName}&units=metric&APPID=${process.env.REACT_APP_API_KEY}`
+      console.log('api', weatherApiUrl)
 
       const res = await fetch(weatherApiUrl)
       console.log(res)
@@ -43,7 +43,7 @@ const Search = () => {
 <div className="container mt-5">
 <div className="row">
         <div className="col-12">
-          <h1>Search</h1>
+          <h1>Search2</h1>
             <form onSubmit={searchCity}>
                 <div className="form-group">
                     <label htmlFor="city">Search for cityname</label>
